@@ -1,2 +1,2 @@
 # Web-Crawler---Python
-It's a web crawler which crawls all the links from the start page.
+It's a web crawler which crawls all the links starting from the initial page.
