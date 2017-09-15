@@ -12,15 +12,21 @@ class Spider:
     domain_name = ''
     queue_file = ''
     crawled_file = ''
+    jobs_file = ''
     queue = set()
     crawled = set()
+    jobs = set()
+    keywords = []
 
-    def __init__(self, project_name, base_url, domain_name):
+    def __init__(self, project_name, base_url, domain_name, keywords):
         Spider.project_name = project_name
         Spider.base_url = base_url
         Spider.domain_name = domain_name
         Spider.queue_file = Spider.project_name + '/queue.txt'
         Spider.crawled_file = Spider.project_name + '/crawled.txt'
+        Spider.jobs_file = Spider.project_name + '/jobs.txt'
+        Spider.keywords = keywords
+
         self.boot()
         self.crawl_page('First Spider ', Spider.base_url)
 
@@ -49,12 +55,15 @@ class Spider:
             if 'text/html' in response.getheader('Content-Type'):
                 html_bytes = response.read()
                 html_string = html_bytes.decode('utf-8')
-            finder = LinkFinder(Spider.base_url, page_url)
+            finder = LinkFinder(Spider.base_url, page_url, Spider.keywords)
             finder.feed(html_string)
 
-        except:
+        except Exception as e:
+            print(str(e))
             print('Error: can not crawl page')
             return set()
+
+        Spider.add_jobs(finder.get_jobs())
 
         return finder.page_links()
 
@@ -68,8 +77,16 @@ class Spider:
             if Spider.domain_name not in url:
                 continue
             Spider.queue.add(url)
+    @staticmethod
+    def add_jobs(jobs_found):
+        for job in jobs_found:
+            if job in Spider.jobs:
+                continue
+            else:
+                Spider.jobs.add(job)
 
     @staticmethod
     def update_files():
         set_to_file(Spider.queue, Spider.queue_file)
         set_to_file(Spider.crawled, Spider.crawled_file)
+        set_to_file(Spider.jobs, Spider.jobs_file)
